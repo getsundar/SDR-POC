@@ -153,6 +153,12 @@
     box-shadow: 0 0 2px 0 rgba(0, 0, 0, 0.12);
     border: solid 1px #e77b2f;
 	}
+	#saveAnno{
+		color: #ffff;
+    background-color: #e77b2f;
+    box-shadow: 0 0 2px 0 rgba(0, 0, 0, 0.12);
+    border: solid 1px #e77b2f;
+	}
 	#loadModel{
 	color: #ffff;
     background-color: #e77b2f;
@@ -428,10 +434,12 @@
 				<a class="navbar-brand brand" href="#"></a>
 			</div> -->
 			<ul class="nav navbar-nav structural-h2">
-				<li class="active"><div class="head-sdr">Defects</div></li>
+				<li class="active">
+					<div class="head-sdr">Defects</div>
+				</li>
 				<li><a href="#">Maintenance</a></li>
 				<li><a href="#">Organisation</a></li>
-				<li><a href="#">Processs & Tools</a></li>
+				<li><a href="#">Processs</a></li>
 				<li class="text-center"><a href="#">Library</a></li>
 
 				<li class="pull-right"><a href="#"><span class="glyphicon glyphicon-log-in"></span> Login</a></li>
@@ -605,7 +613,7 @@
 									</div>
 								</div>
 								<div class="text-center mt-10 mt-3">
-									<button style="margin-bottom: 10px;" class="btn-klm" id="saveAnno">Save</button>
+									<button style="margin-bottom: 10px;" class="btn" id="saveAnno">Save</button>
 									<small id="annoRes" class="form-text text-muted" style="display: none; color: green">Saved Successfully</small>
 								</div>
 							</div>
@@ -622,7 +630,9 @@
 	<!-- Mask & flexbox options-->
 	</div>
 	<!-- Full Page Intro -->
-	<div id="toast"><div id="desc">Saved succesfully</div></div>
+	<div id="toast">
+		<div id="desc">Saved succesfully</div>
+	</div>
 	<footer>
 		<div class="g-legal-footer">
 			<div class="g-grid--row">
@@ -676,7 +686,14 @@
 			onLoadmodel();
 		});
 		document.getElementById('markAnno').addEventListener('click', function () {
+			document.getElementById('markAnno').disabled = true;
+			document.getElementById('saveAnno').disabled = true;
 			markDefectMode = true;
+			$('.panel-collapse').each(function () {
+				if ($(this).hasClass('in')) {
+					$(this).collapse('toggle');
+				}
+			});
 			clearForm();
 		});
 		$('#loadAnno').click(function () {
@@ -689,16 +706,16 @@
 				if (index != -1) {
 					api.getAnnotation(index, function (err, info) {
 						if (info) {
-							$('.panel-collapse').each(function(){
-								if($(this).hasClass('in') && !$(this).hasClass('first')){
+							$('.panel-collapse').each(function () {
+								if ($(this).hasClass('in') && !$(this).hasClass('first')) {
 									$(this).collapse('toggle');
-							}
+								}
 							});
 							/*setTimeout(function(){
 								$("#collapseOne").collapse('toggle');
 							},500);*/
 
-							if(!$("#collapseOne").hasClass('in')){
+							if (!$("#collapseOne").hasClass('in')) {
 								$("#collapseOne").collapse('toggle');
 							}
 							currentAnnotationToUpdate = info;
@@ -711,6 +728,8 @@
 			api.addEventListener('click', function (info) {
 				if (info.position2D !== null && markDefectMode) {
 					markDefectMode = false;
+					document.getElementById('markAnno').disabled = false;
+					document.getElementById('saveAnno').disabled = false;
 					positionX = info.position3D[0];
 					positionY = info.position3D[1] - 1;
 					positionZ = info.position3D[2];
@@ -725,7 +744,7 @@
 						console.log("Info:::" + JSON.stringify(info));
 						cameraPosition = camera.position;
 						cameraTarget = camera.target;
-						document.getElementById('saveAnno').disabled = false;
+						//document.getElementById('saveAnno').disabled = false;
 						document.getElementById('annoRes').style.display = "hidden";
 						currentAnnotationToCreate = {
 							pox: positionX,
@@ -826,27 +845,29 @@
 							obj.registrationCode === currentRegistrationCodeSelected)
 					});
 					api.removeAnnotation(0);
-					currentModel[0].defectsDetails.forEach(function (obj) {
-						if (obj.order !== 0) {
-							api.createAnnotation(
-								[obj.pox, obj.poy, obj.poz],
-								[obj.nox, obj.noy, obj.noz],
-								obj.camPos,
-								obj.camTarget,
-								obj.title,
-								obj.content,
-								function (index) {
-									// console.log('added hotspot: ' + index);
-									// api.removeAnnotation(index);
-								}
-							);
-						} else {
-							api.updateAnnotation(0, {
-								title: obj.title,
-								content: obj.content
-							});
-						}
-					});
+					if (currentModel[0]) {
+						currentModel[0].defectsDetails.forEach(function (obj) {
+							if (obj.order !== 0) {
+								api.createAnnotation(
+									[obj.pox, obj.poy, obj.poz],
+									[obj.nox, obj.noy, obj.noz],
+									obj.camPos,
+									obj.camTarget,
+									obj.title,
+									obj.content,
+									function (index) {
+										// console.log('added hotspot: ' + index);
+										// api.removeAnnotation(index);
+									}
+								);
+							} else {
+								api.updateAnnotation(0, {
+									title: obj.title,
+									content: obj.content
+								});
+							}
+						});
+					}
 				});
 			});
 		};
@@ -931,6 +952,8 @@
 				ui_controls: 0
 
 			});
+			document.getElementById('markAnno').disabled = false;
+			document.getElementById('saveAnno').disabled = false;
 		};
 
 		function onError(error) {
@@ -944,10 +967,12 @@
 		};
 
 		function launch_toast() {
-		
-    	var x = document.getElementById("toast")
-    	x.className = "show";
-    	setTimeout(function(){ x.className = x.className.replace("show", ""); }, 2000);
+
+			var x = document.getElementById("toast")
+			x.className = "show";
+			setTimeout(function () {
+				x.className = x.className.replace("show", "");
+			}, 2000);
 		}
 
 		function init() {
